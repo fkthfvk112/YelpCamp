@@ -1,0 +1,50 @@
+<% layout('layouts/boilerplate') %>
+        <!--put 사용을 위해
+        1. app.js의
+            const methodOverride = require('method-override');
+
+            app.use(methodOverride('_method'));
+
+            app.put('/campground/:id', async(req, res)=>{
+            res.send("IT WORKED!!");})
+
+        2. edit.ejs의
+                ?_method=PUT ...query string
+        -->
+
+    <div class="row">
+        <h1 class="text-center">New Campground!</h1>
+        <div class="col-6 offset-3">
+            <form action="/campgrounds/<%= campground._id %>?_method=PUT" method="post">
+                <div class="mb-3">
+                    <label class="form-label" for="title">Title</label>
+                    <input class="form-control" type="text" id="title" name="campground[title]" value="<%= campground.title %>"> <!--value 속성 : 기본적으로 입력 되어있는 실제 값-->
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="location">Locations</label>
+                    <input class="form-control" type="text" id="location" name="campground[location]" value="<%= campground.location %>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="image">Image Url</label>
+                    <input class="form-control" type="text" id="image" name="campground[image]" value="<%= campground.image %>">
+                </div>
+                <div class="mb-3">
+                    <label class="mb-3" for="price">Campground Price</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="price-label">$</span>
+                        <input type="text" class="form-control" id="price" name="campground[price]"placeholder="0.00" aria-label="price" aria-describedby="price-label" value="<%= campground.price %>">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" type="text" id="description" name="campground[description]">
+                        <%= campground.description %>
+                    </textarea>
+                </div>
+                    <button class="btn btn-success">Update Campground</button>
+                </div>
+            </form>
+            <a href="/campgrounds/<%= campground._id %>">Back to Campgrounds</a>
+
+        </div>
+    </div>
