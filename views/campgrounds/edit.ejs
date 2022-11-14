@@ -15,24 +15,26 @@
     <div class="row">
         <h1 class="text-center">New Campground!</h1>
         <div class="col-6 offset-3">
-            <form action="/campgrounds/<%= campground._id %>?_method=PUT" method="post">
+            <!--유효성 검사 (부트스트랩-Doc-Form-valadation)-->
+
+            <form class ="valadated_form" action="/campgrounds/<%= campground._id %>?_method=PUT" method="post" novalidate>
                 <div class="mb-3">
                     <label class="form-label" for="title">Title</label>
-                    <input class="form-control" type="text" id="title" name="campground[title]" value="<%= campground.title %>"> <!--value 속성 : 기본적으로 입력 되어있는 실제 값-->
+                    <input class="form-control" type="text" id="title" name="campground[title]" value="<%= campground.title %>" required> <!--value 속성 : 기본적으로 입력 되어있는 실제 값-->
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="location">Locations</label>
-                    <input class="form-control" type="text" id="location" name="campground[location]" value="<%= campground.location %>">
+                    <input class="form-control" type="text" id="location" name="campground[location]" value="<%= campground.location %>" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="image">Image Url</label>
-                    <input class="form-control" type="text" id="image" name="campground[image]" value="<%= campground.image %>">
+                    <input class="form-control" type="text" id="image" name="campground[image]" value="<%= campground.image %>" required>
                 </div>
                 <div class="mb-3">
                     <label class="mb-3" for="price">Campground Price</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="price-label">$</span>
-                        <input type="text" class="form-control" id="price" name="campground[price]"placeholder="0.00" aria-label="price" aria-describedby="price-label" value="<%= campground.price %>">
+                        <input type="text" class="form-control" id="price" name="campground[price]"placeholder="0.00" aria-label="price" aria-describedby="price-label" value="<%= campground.price %>" required>
                     </div>
                 </div>
                 <div class="mb-3">

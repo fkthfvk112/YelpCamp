@@ -6,7 +6,13 @@ const CampgroundSchema = new Schema({
     image: String,
     price: Number,
     description: String,
-    location: String
+    location: String,
+    reviews: [
+        {
+            type:Schema.Types.ObjectId,
+            ref: 'Review'
+        }
+    ]
 });
 
 module.exports = mongoose.model('Campground', CampgroundSchema); //모듈을 스코프 밖으로 내보낼 때 module.exports 현재 모듈에 대한 정보를 갖는 객체이다
