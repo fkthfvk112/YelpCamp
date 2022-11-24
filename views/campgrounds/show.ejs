@@ -1,46 +1,63 @@
 <% layout('layouts/boilerplate') %>
-    <!--app.js에서
+  <!--app.js에서
         app.get('/campgrounds/:id', async(req, res)=>{
         const campground = await Campground.findById(req.params.id);
         res.render('campgrounds/show', {campground});
     })
 즉 입력받은 id에 해당하는 db를 받아옴-->
-    <div class="row"><!--grid form의 post메서드를 어떻게 이용하련지-->
-        <div class="col-6 offset-3">
-            <div class="card">
-                <img src="<%= campground.image%>" class="card-img-top" alt="...">
-                <div class="card-body">
-                  <h5 class="card-title"><%= campground.title%></h5>
-                  <p class="card-text"><%= campground.description%></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item text-muted"><%= campground.location%></li>
-                  <li class="list-group-item text-muted">$<%= campground.price%>/night</li>
-                </ul>
-                <div class="card-body">
-                  <a href="/campgrounds/<%= campground._id %>/edit" class="card-link btn btn-info">Edit</a>
-                  <form class = "d-inline"action="/campgrounds/<%= campground._id %>?_method=DELETE" method="post">
-                    <button class="btn btn-danger">DELETE</button>
-                  </form>
-                </div>
-                <h2>Leave a Review</h2>
-                <form action="/campgrounds/<%= campground._id%>/reviews" method ="POST" class="mb-3 valadated_form" novalidate>
-                  <div class="mb-3">
-                    <label for="rating" class="form-label">rating</label>
-                    <input type="range" min="1" max="5" class="form-range" name="review[rating]">
-                  </div>
-                  <div class="mb-3">
-                    <label for="body" class="form-label">Review</label>
-                    <textarea class = "form-control" name="review[body]" id="body" cols="30" rows="3" required></textarea>
-                  </div>
-                  <button class="btn btn-success">Submit</button>
-                </form>
-                <% for(let review of campground.reviews) { %>
-                <div class="mb-3">
-                  <p>Rating: <%= review.rating%></p>
-                  <p>Review: <%= review.body%></p>
-                </div>
-                <% } %>
-              </div>
+  <div class="row">
+    <!--grid form의 post메서드를 어떻게 이용하련지-->
+    <div class="col-6">
+      <div class="card">
+        <img src="<%= campground.image%>" class="card-img-top" alt="...">
+        <div class="card-body">
+          <h5 class="card-title">
+            <%= campground.title%>
+          </h5>
+          <p class="card-text">
+            <%= campground.description%>
+          </p>
         </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item text-muted">
+            <%= campground.location%>
+          </li>
+          <li class="list-group-item text-muted">$<%= campground.price%>/night</li>
+        </ul>
+        <div class="card-body">
+          <a href="/campgrounds/<%= campground._id %>/edit" class="card-link btn btn-info">Edit</a>
+          <form class="d-inline" action="/campgrounds/<%= campground._id %>?_method=DELETE" method="post">
+            <button class="btn btn-danger">DELETE</button>
+          </form>
+        </div>
+      </div>
     </div>
+    <div class="col-6">
+       <h2>Leave a Review</h2>
+        <form action="/campgrounds/<%= campground._id%>/reviews" method="POST" class="mb-3 valadated_form" novalidate>
+          <div class="mb-3">
+            <label for="rating" class="form-label">rating</label>
+            <input type="range" min="1" max="5" class="form-range" name="review[rating]">
+          </div>
+          <div class="mb-3">
+            <label for="body" class="form-label">Review</label>
+            <textarea class="form-control" name="review[body]" id="body" cols="30" rows="3" required></textarea>
+          </div>
+          <button class="btn btn-success">Submit</button>
+        </form>
+    
+        <% for(let review of campground.reviews) { %>
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-body">Rating: <%= review.rating%></h5>
+              <p class="card-text">Review: <%= review.body%></p>
+              <!-- review = comaporund.reviews 즉, campgrund의 리뷰에 저장된 아이디를 끝으로 가지는 주소로 post-->
+              <form action="/campgrounds/<%= campground._id %>/reviews/<%= review._id%>?_method=DELETE" method="POST">
+                <button class="btn btn-sm btn-danger">Delete</buttn>
+              </form>
+            </div>
+          </div>
+          <% } %>
+      </div>
+    </div>
+  </div>
