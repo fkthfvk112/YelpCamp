@@ -11,9 +11,17 @@ const Joi = require('joi');
 const { nextTick } = require('process');
 const ExpressError = require('./utils/ExpressError.js');
 const { campgroundSchema, reviewSchema} = require('./schemas.js');
-const campgrounds = require('./routes/campgrounds');
-const reviews = require('./routes/reviews');
 const session = require('express-session');
+const flash = require('connect-flash')
+
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const User = require('./models/user');
+
+const campgroundsRoutes = require('./routes/campgrounds');
+const reviewsRoutes = require('./routes/reviews');
+const usersRoutes = require('./routes/users');
+
 mongoose.connect('mongodb://localhost:27017/yelp-camp');
 /* 몽구스 사용법 https://mongoosejs.com/docs/ */
 const db = mongoose.connection;
@@ -50,46 +58,38 @@ app.use((req, res, next)=>{
 })
  */
 
+
 const sessionConfig={
     secret:"abagfdgsdgsdgdsfg",
     resave: false,
     saveUninitialized: true,
     cookie: {
-        httpOnly: true,
         expires: Date.now() + 1000 * 60 * 60 * 24* 7, //쿠키의 만료일자(7일)
         maxAge: 1000 * 60 * 60 * 24* 7,
     }
 };
+
 app.use(session(sessionConfig)); //세션사용
+app.use(flash());
 
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
 
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
-const validateCampground = (req, res, next)=>{
-    const { error } = campgroundSchema.validate(req.body) //campgroundSchema는 JOi를 활용해 만든 schemas.js를 require
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);
-    }
-    else{
-        next();
-    }
-}
+app.use((req, res, next)=>{
+    console.log(session)
+    res.locals.currentUser = req.user;
+    res.locals.success = req.flash('success');//flash 'success'가 무엇이든지 받아와서 locals의 success키에 저장
+    res.locals.error = req.flash('error');
+    next();
+})//res.locals.success: success를 마치 전역 변수처럼 사용가능하게 됌, 해당 미들웨어 함수가 거친 곳에서 모두 success를 사용가능
 
-const validateReview = (req, res, next)=>{
-    const { error } = reviewSchema.validate(req.body)
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);
-    }
-    else{
-        next();
-    }
-}
-
-
-
-app.use("/campgrounds", campgrounds);//campgrounds로 시작하면 ./routes/campgournds.js의 라우터 함수로 처리
-app.use("/campgrounds/:id/reviews", reviews);
+app.use("/campgrounds", campgroundsRoutes);//campgrounds로 시작하면 ./routes/campgournds.js의 라우터 함수로 처리
+app.use("/campgrounds/:id/reviews", reviewsRoutes);
+app.use("/", usersRoutes);
 
 app.all('*', (req, res, next)=>{
     next(new ExpressError('Page not found', 404))
@@ -99,6 +99,7 @@ app.use((err, req, res, next)=> {//에러 행들링, throw로 던진 에러도 �
     if(!err.message) err.message = "oh error!!!!";
     res.status(statusCode).render('error', {err});
 })
+
 app.listen(3000, ()=>{
     console.log('Serving on port 3000');
 })
