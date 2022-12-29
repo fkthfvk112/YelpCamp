@@ -1,4 +1,4 @@
-if(process.env.NODE_ENV !== "production"){
+if(process.env.NODE_ENV !== "production"){ //배포모드가 아닐 때
     require('dotenv').config();
 }
 
@@ -6,15 +6,10 @@ const express = require('express');//다른 모듈을 사용할 떄 require
 const path = require('path');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
-const catchAsync = require('./utils/catchAsync.js')
-const Campground = require('./models/campground');
-const Review = require('./models/review');
 const methodOverride = require('method-override');//post, get뿐 아닌 delete put을 가능하게 함
 const ejsMate = require('ejs-mate');//ejs-mate는 ejs의 재사용을 도와줌(boilerplate에 사용)https://www.npmjs.com/package/ejs-mate
 const Joi = require('joi');
-const { nextTick } = require('process');
 const ExpressError = require('./utils/ExpressError.js');
-const { campgroundSchema, reviewSchema} = require('./schemas.js');
 const session = require('express-session');
 const flash = require('connect-flash')
 
@@ -25,6 +20,9 @@ const User = require('./models/user');
 const campgroundsRoutes = require('./routes/campgrounds');
 const reviewsRoutes = require('./routes/reviews');
 const usersRoutes = require('./routes/users');
+
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp');
 /* 몽구스 사용법 https://mongoosejs.com/docs/ */
@@ -47,9 +45,20 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 //_dirname 는 main.js(쓰고있는 자바스크립트 파일)의 현재경로, 그 경로에 +/public이라는 뜻
 
+
 app.use(express.urlencoded({extended:true}));
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public' )))
+app.use(mongoSanitize({//prevent basic mongo injection
+    replaceWith: '_'
+}));
+
+app.use(helmet({
+    contentSecurityPolicy : false,
+    crossOriginEmbedderPolicy : false
+
+}));
+
 //app.use(morgan('tiny')); //로그를 찍어줌
 /*
 app.use((req, res, next)=>{
@@ -68,6 +77,8 @@ const sessionConfig={
     resave: false,
     saveUninitialized: true,
     cookie: {
+        httpOnly:true,
+        //secure:true,
         expires: Date.now() + 1000 * 60 * 60 * 24* 7, //쿠키의 만료일자(7일)
         maxAge: 1000 * 60 * 60 * 24* 7,
     }
@@ -84,7 +95,6 @@ passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 app.use((req, res, next)=>{
-    console.log(session)
     res.locals.currentUser = req.user;//from passport "deserializeUser()" 해당 함수는 매 라우터 요청마다 실행됨
     res.locals.success = req.flash('success');//flash 'success'가 무엇이든지 받아와서 locals의 success키에 저장
     res.locals.error = req.flash('error');
@@ -94,6 +104,10 @@ app.use((req, res, next)=>{
 app.use("/campgrounds", campgroundsRoutes);//campgrounds로 시작하면 ./routes/campgournds.js의 라우터 함수로 처리
 app.use("/campgrounds/:id/reviews", reviewsRoutes);
 app.use("/", usersRoutes);
+app.get('/', (req, res)=>{
+    res.render('home');
+    console.log(req.query);
+})
 
 app.all('*', (req, res, next)=>{
     next(new ExpressError('Page not found', 404))

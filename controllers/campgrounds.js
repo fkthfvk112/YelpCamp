@@ -16,9 +16,9 @@ module.exports.randerNewFrom = (req, res)=>{//해당 주소일 때, campgorunds/
 }
 
 module.exports.createCampground = async(req, res, next) =>{
-    const geoData = await geocoder.forwardGeocode({
+    const geoData = await geocoder.forwardGeocode({//https://github.com/mapbox/mapbox-sdk-js/blob/main/docs/services.md#forwardgeocode
         query: req.body.campground.location,
-        limit: 1
+        limit: 1,
     }).send();
     //post로 받아온 정보 출력, new.ejs의 form의 action주소와 일치시켜서 작동
     const campground = new Campground(req.body.campground);
@@ -57,12 +57,22 @@ module.exports.renderEditFrom = async(req, res)=>{//해당 주소로 들어오�
 
 module.exports.updateCampground = async(req, res)=>{//require('method-override'); :: from ejs
     const { id } = req.params;//해당 아이디(캠프아이디) 찾아서
-    console.log("ㄹㄴㅇㄹㄴㅁㄹㅇㄴㄹ");
-    console.log(req.body);
+    console.log(req.params);
+    //console.log(req.body);
     const campground = await Campground.findById(id);//존재 확인
     const imgs = req.files.map(f => ({url: f.path, filename: f.filename}));
     campground.images.push(...imgs);
-    await campground.save();
+    
+    const inputLocation = req.body.campground.location;
+    if(inputLocation !== campground.location){
+        await campground.updateOne({ $set:{ location:inputLocation} });
+        const geoData = await geocoder.forwardGeocode({
+            query: inputLocation,
+            limit: 1,
+        }).send();
+        await campground.updateOne({$set : { geometry: geoData.body.features[0].geometry}})
+    }
+
     if(req.body.deleteImages){
         for(let filename of req.body.deleteImages){
             cloudinary.uploader.destroy(filename);//delte from cloudinary
@@ -70,6 +80,8 @@ module.exports.updateCampground = async(req, res)=>{//require('method-override')
         await campground.updateOne({ $pull: { images: { filename: {$in: req.body.deleteImages } } } });//delete from mongo
         console.log(campground);
     }
+    await campground.save();
+
     req.flash('success', 'Successfully updated campgrounds');
     res.redirect(`/campgrounds/${campground._id}`);//수정 후 리다이렉션
 };

@@ -59,7 +59,7 @@
     </div>
     <div class="col-6">
 
-      <div id='map' style='width: 400px; height: 300px;'></div>
+      <div id='map' style='width: 100%; height: 300px;'></div>
       
       <% if(currentUser) { %>
        <h2>Leave a Review</h2>
@@ -107,6 +107,7 @@
   </div>
 
 <script>
+  console.log("쇼페이지");
   const mapToken = '<%= process.env.MAPBOX_TOKEN %>';
   const campgroundString = '<%- JSON.stringify(campground) %>';
 </script>

@@ -1,5 +1,6 @@
 mapboxgl.accessToken = mapToken;
 const campground = JSON.parse(campgroundString);
+console.log("쇼맵페이지");
 console.log(campground);
 const map = new mapboxgl.Map({
     language: 'ko',//not work
@@ -18,3 +19,5 @@ const marker1 = new mapboxgl.Marker()
 )
 .setLngLat(campground.geometry.coordinates)
 .addTo(map);
+
+map.addControl(new mapboxgl.NavigationControl());
