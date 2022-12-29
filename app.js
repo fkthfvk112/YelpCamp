@@ -1,3 +1,7 @@
+if(process.env.NODE_ENV !== "production"){
+    require('dotenv').config();
+}
+
 const express = require('express');//다른 모듈을 사용할 떄 require
 const path = require('path');
 const mongoose = require('mongoose');
@@ -81,7 +85,7 @@ passport.deserializeUser(User.deserializeUser());
 
 app.use((req, res, next)=>{
     console.log(session)
-    res.locals.currentUser = req.user;
+    res.locals.currentUser = req.user;//from passport "deserializeUser()" 해당 함수는 매 라우터 요청마다 실행됨
     res.locals.success = req.flash('success');//flash 'success'가 무엇이든지 받아와서 locals의 success키에 저장
     res.locals.error = req.flash('error');
     next();

@@ -1,0 +1,117 @@
+#include <queue>
+#include <iostream>
+#include <map>
+#include <algorithm>
+#include <vector>
+#include <stack>
+
+using namespace std;
+class Node {
+public:
+    int h, g, f;
+    int direction;//0 1 2 3
+    pair<int, int> startPoint;
+    pair<int, int> endPoint;
+    Node(pair<int, int> const& _startPoint, pair<int, int> const& _endPoint, int _g, int _direction = 0) {
+        startPoint = _startPoint;
+        endPoint = _endPoint;
+        direction = _direction;
+        setH(startPoint, endPoint);
+        setG(_g);
+        setF();
+    }
+
+    void setH(pair<int, int> startPoint, pair<int, int> endPoint) {
+        int dx = abs(startPoint.first - endPoint.first);
+        int dy = abs(startPoint.second - endPoint.second);
+        h = dx + dy;
+    }
+    void setG(int _g) {
+        g = _g;
+    }
+    void setF() {
+        f = g + h;
+    }
+};
+
+int n;
+struct cmp {
+    bool operator()(Node& a, Node& b) {
+        return a.f > b.f;
+    }
+};
+vector<Node> A_star(vector<vector<int>>& space) {
+    int max = n - 1;
+    priority_queue<Node, vector<Node>, cmp> open_list;
+    vector<Node> close_list;
+    vector<vector<int>> visited = space;
+    for (auto v1 : visited) {
+        for (auto v2 : v1) {
+            v2 = 0;
+        }
+    }
+    pair<int, int> endPoint = { 0, max };
+
+    Node root = Node(make_pair(max, 0), endPoint, 0);
+    open_list.push(root);
+
+    while (!open_list.empty()) {
+        Node now = open_list.top();
+        close_list.push_back(now);
+        open_list.pop();
+        if (now.startPoint == endPoint) break;
+
+        int nodeRow = now.startPoint.first;
+        int nodeCol = now.startPoint.second;
+
+        if (nodeRow -1 >= 0 && space[nodeRow - 1][nodeCol] == 0) {//up
+            if(visited[nodeRow -1][nodeCol] != 1)
+                open_list.push(Node(make_pair(nodeRow - 1, nodeCol), endPoint, 1, 0));
+            visited[nodeRow - 1][nodeCol] = 1;
+        }
+        if (nodeCol +1 <= max && space[nodeRow][nodeCol + 1] == 0) {//right
+            if (visited[nodeRow][nodeCol+1] != 1)
+                open_list.push(Node(make_pair(nodeRow, nodeCol+1), endPoint, 1, 1));
+            visited[nodeRow][nodeCol + 1] = 1;
+        }
+        if (nodeRow + 1 <= max && space[nodeRow + 1][nodeCol] == 0) {//down
+            if (visited[nodeRow +1][nodeCol] != 1)
+                open_list.push(Node(make_pair(nodeRow + 1, nodeCol), endPoint, 1, 2));
+            visited[nodeRow + 1][nodeCol] = 1;
+        }
+        if (nodeCol-1 >= 0 && space[nodeRow][nodeCol - 1]== 0) {//left
+            if (visited[nodeRow][nodeCol-1] != 1)
+                open_list.push(Node(make_pair(nodeRow, nodeCol - 1), endPoint, 1, 3));
+            visited[nodeRow][nodeCol - 1] = 1;
+        }
+    }
+    return close_list;
+}
+int main() {
+    int t;
+    cin >> n >> t;
+    int element;
+    vector<vector<int>> space(n, vector<int>(n));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> element;
+            space[i][j] = element;
+        }
+    }
+    vector<Node> route = A_star(space);
+    int cost = 0;
+    int preDirection = 0;
+
+
+    for (auto r : route) {
+        if (preDirection != r.direction) {
+            cost += t;
+        }
+        preDirection = r.direction;
+        cost++;
+    }
+    cost--;
+    cout << cost << endl;
+
+    return 0;
+}

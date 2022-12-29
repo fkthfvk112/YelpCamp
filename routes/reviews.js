@@ -5,6 +5,8 @@ const catchAsync = require('../utils/catchAsync.js')
 const { campgroundSchema, reviewSchema} = require('../schemas.js');
 const Campground = require('../models/campground');
 const Review = require('../models/review');
+const reviews = require('../controllers/reviews');
+const {isLoggedIn, validateReview, isReviewAuthor} = require('../middleware');
 
 const validateCampground = (req, res, next)=>{
     const { error } = campgroundSchema.validate(req.body) //campgroundSchema는 JOi를 활용해 만든 schemas.js를 require
@@ -17,35 +19,8 @@ const validateCampground = (req, res, next)=>{
     }
 }
 
-const validateReview = (req, res, next)=>{
-    const { error } = reviewSchema.validate(req.body)
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);
-    }
-    else{
-        next();
-    }
-}
+router.post('/', validateReview, isLoggedIn, catchAsync(reviews.createReview));
 
-
-router.post('/', validateReview, catchAsync(async(req, res)=>{
-    const campground = await Campground.findById(req.params.id);
-    const review = new Review(req.body.review);
-    campground.reviews.push(review);
-    await review.save();
-    await campground.save();
-    req.flash('success', "Created new reviews");
-    res.redirect(`/campgrounds/${campground._id}`);
-}))
-
-router.delete('/:reviewId', catchAsync(async(req, res)=>{
-    const { id, reviewId } = req.params;
-    console.log(id, reviewId);
-    await Campground.findByIdAndUpdate(id, { $pull: { reviews:reviewId} });//$pull 조건에 맞는 요소를 array에서 꺼냄
-    await Review.findByIdAndDelete(reviewId);
-    req.flash('success', 'Deleted a review');
-    res.redirect(`/campgrounds/${id}`);
-}))
+router.delete('/:reviewId', isLoggedIn, isReviewAuthor, catchAsync(reviews.deleteReview))
 
 module.exports = router;

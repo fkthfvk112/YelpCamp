@@ -1,100 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const flash = require('connect-flash')
-const Joi = require('joi');
-
-const { modelName } = require('../models/review');
-const ExpressError = require('../utils/ExpressError.js');
+const campgrounds = require('../controllers/campgrounds');
 const catchAsync = require('../utils/catchAsync.js')
-const Campground = require('../models/campground');
-const Review = require('../models/review');
-const { campgroundSchema, reviewSchema} = require('../schemas.js');
-const {isLoggedIn} = require('../middleware')
+const {isLoggedIn, isAuthor ,validateCampground, validateReview} = require('../middleware')
+const multer = require('multer');//이미지 업로드 미들웨어 ...미들웨어->업로드->clodinary
+const { storage }  = require('../cloudinary')
+const upload = multer({ storage });
 
-const validateCampground = (req, res, next)=>{
-    const { error } = campgroundSchema.validate(req.body) //campgroundSchema는 JOi를 활용해 만든 schemas.js를 require
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);
-    }
-    else{
-        next();
-    }
-}
+router.route('/')
+    .get(catchAsync(campgrounds.index))
+    .post(isLoggedIn, upload.array('image'), validateCampground, catchAsync(campgrounds.createCampground));
 
-const validateReview = (req, res, next)=>{
-    const { error } = reviewSchema.validate(req.body)
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);
-    }
-    else{
-        next();
-    }
-}
+router.get('/new', isLoggedIn, campgrounds.randerNewFrom);
 
-router.get('/', catchAsync(async(req, res)=>{
-    const campgrounds = await Campground.find({});
-    res.render('campgrounds/index', {campgrounds})
-}))
+router.route('/:id')
+    .get(catchAsync(campgrounds.showCampgrounds))
+    .put(isLoggedIn, isAuthor, upload.array('image'), validateCampground, catchAsync(campgrounds.updateCampground))
+    .delete(isAuthor, catchAsync(campgrounds.deleteCampgorund));
 
-router.get('/new', isLoggedIn, (req, res)=>{//해당 주소일 때, campgorunds/new를 랜더링해서 보여줌
-    res.render('campgrounds/new');
-})
 
-router.post('/', isLoggedIn, validateCampground, catchAsync(async(req, res, next) =>{
-    //post로 받아온 정보 출력, new.ejs의 form의 action주소와 일치시켜서 작동
-        const campgroundSchema = Joi.object({
-            campground: Joi.object({
-                title: Joi.string().required(),
-                price: Joi.number().min(0).required(),
-                image: Joi.string().required(),
-                location: Joi.string().required(),
-                description: Joi.string().required()
-            }).required()
-        })//valadation확인 용이하게 해주는 라이브러리 JOI
-        const result = campgroundSchema.validate(req.body)
-        const { error } = result;
-        if(error){
-            const msg = error.details.map(el => el.message).join(', ');
-            throw new ExpressError(msg, 400);
-        }
-        console.log(result);
-        const campground = new Campground(req.body.campground);
-        campground.author = req.user._id;//req.usr : passport에 의해 자동 생성
-        await campground.save();
-        req.flash('success', 'Successfully made a new campground');
-        res.redirect(`/campgrounds/${campground._id}`);
-}))
+router.get('/:id/edit', isLoggedIn, isAuthor, catchAsync(campgrounds.renderEditFrom));
 
-router.get('/:id', isLoggedIn, catchAsync(async(req, res)=>{
-    const campground = await Campground.findById(req.params.id).populate('reviews').populate('author');
-    console.log(campground);
-    if(!campground){
-        req.flash('error', 'Cannot find campground!!');
-        return res.redirect('/camgrounds');
-    }
-    res.render('campgrounds/show', {campground});
-}))
 
-router.get('/:id/edit', catchAsync(async(req, res)=>{//해당 주소로 들어오면
-    const campground = await Campground.findById(req.params.id);//해당 id에 맞는 데이터 찾아서
-    res.render('campgrounds/edit', {campground});//render처리
-}))
-
-router.put('/:id', validateCampground, catchAsync(async(req, res)=>{//require('method-override'); :: from ejs
-    const { id } = req.params;//해당 아이디 찾아서
-    const campground = await Campground.findByIdAndUpdate(id, {...req.body.campground});//업데이트 수행
-    req.flash('success', 'Successfully updated campgrounds');
-    res.redirect(`/campgrounds/${campground._id}`);//수정 후 리다이렉션
-}))
-
-router.delete('/:id', catchAsync(async(req, res)=>{//render는 위에서 진행, 여기서는 delete동작 후 redirect만 진행
-    //require('method-override'); res.render('campgrounds/show', {campground});
-    const { id } = req.params;
-    await Campground.findByIdAndDelete(id);
-    req.flash('success', 'Deleted a campground');
-    res.redirect('/campgrounds');
-}))
 
 module.exports = router;

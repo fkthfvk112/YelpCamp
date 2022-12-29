@@ -17,7 +17,7 @@
         <div class="col-6 offset-3">
             <!--유효성 검사 (부트스트랩-Doc-Form-valadation)-->
 
-            <form class ="needs-validation" action="/campgrounds/<%= campground._id %>?_method=PUT" method="post" novalidate>
+            <form class ="needs-validation" action="/campgrounds/<%= campground._id %>?_method=PUT" method="post" novalidate enctype="multipart/form-data">
                 <div class="mb-3">
                     <label class="form-label" for="title">Title</label>
                     <input class="form-control" type="text" id="title" name="campground[title]" value="<%= campground.title %>" required> <!--value 속성 : 기본적으로 입력 되어있는 실제 값-->
@@ -25,10 +25,6 @@
                 <div class="mb-3">
                     <label class="form-label" for="location">Locations</label>
                     <input class="form-control" type="text" id="location" name="campground[location]" value="<%= campground.location %>" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="image">Image Url</label>
-                    <input class="form-control" type="text" id="image" name="campground[image]" value="<%= campground.image %>" required>
                 </div>
                 <div class="mb-3">
                     <label class="mb-3" for="price">Campground Price</label>
@@ -39,9 +35,23 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="description">Description</label>
-                    <textarea class="form-control" type="text" id="description" name="campground[description]">
+                    <textarea class="form-control mb-3" type="text" id="description" name="campground[description]">
                         <%= campground.description %>
                     </textarea>
+                    <div class="mb-3">
+                        <label for="formFile" class="form-label">Add image(s)</label>
+                        <input class="form-control" type="file" id="image" name="image" multiple>
+                      </div>
+                      <div class="mb-3">
+                        <% campground.images.forEach((img, i)=>{ %>
+                            <img src="<%=img.thumbnail %>" class="img-thumbnail" alt="...">
+                            <div class="form-check-inline">
+                                <input type="checkbox" id="image-<%=i%>" name="deleteImages[]" value="<%=img.filename%>">
+                            </div>
+                            <label for="image-<%=i%>">Delete?</label>
+                        <% });%>
+                      </div>
+
                 </div>
                     <button class="btn btn-success">Update Campground</button>
                 </div>

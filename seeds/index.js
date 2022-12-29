@@ -14,7 +14,7 @@ db.once('open', () => {
 const sample = array => array[Math.floor(Math.random() * array.length)];
 const seedDB = async() =>{ //asunc 함수는 promise리턴
     await Campground.deleteMany({});
-    for(let i = 0; i < 50; i++){
+    for(let i = 0; i < 5; i++){
         const random1000 = Math.floor(Math.random() * 1000);
         const price = Math.floor(Math.random() * 1000);
         const camp = new Campground({
