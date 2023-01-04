@@ -1,6 +1,7 @@
 if(process.env.NODE_ENV !== "production"){ //배포모드가 아닐 때
     require('dotenv').config();
 }
+const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp';//using atlas
 
 const express = require('express');//다른 모듈을 사용할 떄 require
 const path = require('path');
@@ -8,7 +9,6 @@ const mongoose = require('mongoose');
 const morgan = require('morgan');
 const methodOverride = require('method-override');//post, get뿐 아닌 delete put을 가능하게 함
 const ejsMate = require('ejs-mate');//ejs-mate는 ejs의 재사용을 도와줌(boilerplate에 사용)https://www.npmjs.com/package/ejs-mate
-const Joi = require('joi');
 const ExpressError = require('./utils/ExpressError.js');
 const session = require('express-session');
 const flash = require('connect-flash')
@@ -23,8 +23,10 @@ const usersRoutes = require('./routes/users');
 
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
+const MongoDBStore = require("connect-mongo");//memory가 아닌 mongo에 session을 저장하도록
 
-mongoose.connect('mongodb://localhost:27017/yelp-camp');
+
+mongoose.connect(dbUrl);
 /* 몽구스 사용법 https://mongoosejs.com/docs/ */
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, "connection error:"));
@@ -52,6 +54,12 @@ app.use(express.static(path.join(__dirname, 'public' )))
 app.use(mongoSanitize({//prevent basic mongo injection
     replaceWith: '_'
 }));
+
+/*
+const store = MongoDBStore.create({
+    mongoUrl: dbUrl,
+    touchAfter: 24*60*60
+});*/
 
 app.use(helmet({
     contentSecurityPolicy : false,
@@ -81,7 +89,11 @@ const sessionConfig={
         //secure:true,
         expires: Date.now() + 1000 * 60 * 60 * 24* 7, //쿠키의 만료일자(7일)
         maxAge: 1000 * 60 * 60 * 24* 7,
-    }
+    },
+    store: MongoDBStore.create({
+        mongoUrl: dbUrl,
+        touchAfter: 24 * 3600
+    })
 };
 
 app.use(session(sessionConfig)); //세션사용
@@ -118,6 +130,7 @@ app.use((err, req, res, next)=> {//에러 행들링, throw로 던진 에러도 �
     res.status(statusCode).render('error', {err});
 })
 
-app.listen(3000, ()=>{
-    console.log('Serving on port 3000');
+const port = process.env.PORT || 3000;
+app.listen(port, ()=>{
+    console.log(`Serving on port ${port}`);
 })
